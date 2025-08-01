@@ -1,9 +1,11 @@
+
 import Link from "next/link"
 import "./globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Analytics } from "@/components/analytics"
 import { ModeToggle } from "@/components/mode-toggle"
+import { useEffect, useRef } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -16,35 +18,138 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
+function TechBackground() {
+  const canvasRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+
+    const container = canvasRef.current
+    const width = container.clientWidth
+    const height = container.clientHeight
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+    
+    svg.setAttribute("width", "100%")
+    svg.setAttribute("height", "100%")
+    svg.style.position = "absolute"
+    svg.style.top = "0"
+    svg.style.left = "0"
+    svg.style.zIndex = "-1"
+    svg.style.opacity = "0.15"
+
+    // 生成科技感线条网络
+    const lines = []
+    const nodes = []
+    const nodeCount = 15
+    
+    // 创建节点
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: Math.random() * 0.4 - 0.2,
+        vy: Math.random() * 0.4 - 0.2
+      })
+    }
+
+    // 创建连接线
+    nodes.forEach((a, i) => {
+      nodes.slice(i + 1).forEach(b => {
+        const dx = a.x - b.x
+        const dy = a.y - b.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        
+        if (dist < Math.min(width, height) * 0.3) {
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line")
+          line.setAttribute("stroke", "currentColor")
+          line.setAttribute("stroke-width", "0.5")
+          line.setAttribute("x1", a.x.toString())
+          line.setAttribute("y1", a.y.toString())
+          line.setAttribute("x2", b.x.toString())
+          line.setAttribute("y2", b.y.toString())
+          svg.appendChild(line)
+          lines.push({ line, a, b })
+        }
+      })
+    })
+
+    // 添加动态节点
+    nodes.forEach(node => {
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+      circle.setAttribute("r", "2")
+      circle.setAttribute("fill", "currentColor")
+      circle.setAttribute("cx", node.x.toString())
+      circle.setAttribute("cy", node.y.toString())
+      svg.appendChild(circle)
+    })
+
+    container.appendChild(svg)
+
+    // 动画循环
+    let animationId: number
+    const animate = () => {
+      nodes.forEach(node => {
+        node.x += node.vx
+        node.y += node.vy
+        
+        if (node.x < 0 || node.x > width) node.vx *= -1
+        if (node.y < 0 || node.y > height) node.vy *= -1
+      })
+
+      lines.forEach(({ line, a, b }) => {
+        line.setAttribute("x1", a.x.toString())
+        line.setAttribute("y1", a.y.toString())
+        line.setAttribute("x2", b.x.toString())
+        line.setAttribute("y2", b.y.toString())
+      })
+
+      animationId = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      cancelAnimationFrame(animationId)
+      container.removeChild(svg)
+    }
+  }, [])
+
+  return (
+    <div 
+      ref={canvasRef} 
+      className="fixed inset-0 -z-10 overflow-hidden"
+      aria-hidden="true"
+    />
+  )
+}
+
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body
-        className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className}`}
-      >
+    <html lang="en" suppressHydrationWarning>
+      <body className={`antialiased min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 ${inter.className}`}>
+        <TechBackground />
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <div className="max-w-2xl mx-auto py-10 px-4">
+          <div className="max-w-2xl mx-auto py-10 px-4 relative">
             <header>
               <div className="flex items-center justify-between">
                 <ModeToggle />
                 <nav className="ml-auto text-sm font-medium space-x-6">
-                  <Link href="/">主页</Link>
-                  <Link href="/about">关于</Link>
-                  <Link href="/thinks">想法箱</Link>
+                  <Link href="/" className="hover:text-blue-500 transition-colors">主页</Link>
+                  <Link href="/about" className="hover:text-blue-500 transition-colors">关于</Link>
+                  <Link href="/thinks" className="hover:text-blue-500 transition-colors">想法箱</Link>
                 </nav>
               </div>
             </header>
-            <main>{children}</main>
+            <main className="mt-8">{children}</main>
           </div>
           <Analytics />
         </ThemeProvider>
-        <footer className="flex justify-center">
-  <p>此页面由<a href="https://www.luogucloud.top/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-  络股云
-</a>
-提供部署。</p>
-</footer>
-
+        <footer className="relative py-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p>此页面由<a 
+            href="https://www.luogucloud.top/" 
+            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+          >络股云</a>提供部署。</p>
+        </footer>
       </body>
     </html>
   )
