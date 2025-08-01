@@ -38,7 +38,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </div>
           <Analytics />
         </ThemeProvider>
-        <footer><p>此页面由<a href="https://www.luogucloud.top/">络股云</a>提供部署。</p></footer>
+        <footer className="flex justify-center">
+  <p>此页面由<a href="https://www.luogucloud.top/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+  络股云
+</a>
+提供部署。</p>
+</footer>
+
       </body>
     </html>
   )
